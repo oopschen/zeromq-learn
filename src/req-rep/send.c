@@ -8,16 +8,26 @@ int main (void)
 {
     //  Socket to talk to clients
     void *context = zmq_ctx_new ();
-    void *responder = zmq_socket (context, ZMQ_REP);
-    int rc = zmq_bind (responder, "tcp://*:5555");
+    void *sock = zmq_socket (context, ZMQ_REQ);
+    int rc = zmq_connect(sock, "tcp://localhost:5555");
     assert (rc == 0);
 
-    while (1) {
-        char buffer [10];
-        zmq_recv (responder, buffer, 10, 0);
-        printf ("Received Hello\n");
-        sleep (1);          //  Do some 'work'
-        zmq_send (responder, "World", 5, 0);
+    char buf[24];
+    int cnt = 0;
+    while (cnt ++ < 10) {
+        zmq_send (sock, "hello", 5, 0);
+        printf ("send hello\n");
+        
+        int recvBytes = zmq_recv(sock, buf, sizeof(buf), 0);
+        if (0 < recvBytes) {
+          buf[recvBytes] = '\0';
+          printf("recv word: %s\n", buf);
+        }
     }
+
+    zmq_send (sock, "end", 3, 0);
+
+    zmq_close (sock);
+    zmq_ctx_destroy (context);
     return 0;
 }

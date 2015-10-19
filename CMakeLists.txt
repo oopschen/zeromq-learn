@@ -15,3 +15,6 @@ endif()
 ##### request reply example
 add_executable(Send ${PROJ_BASE}/req-rep/send.c)
 target_link_libraries(Send ${Libzmq})
+
+add_executable(Recv ${PROJ_BASE}/req-rep/recv.c)
+target_link_libraries(Recv ${Libzmq})
