@@ -18,3 +18,9 @@ target_link_libraries(Send ${Libzmq})
 
 add_executable(Recv ${PROJ_BASE}/req-rep/recv.c)
 target_link_libraries(Recv ${Libzmq})
+
+##### publisher subscriber example
+add_executable(Pub ${PROJ_BASE}/pub-sub/pub.c)
+target_link_libraries(Pub ${Libzmq})
+add_executable(Sub ${PROJ_BASE}/pub-sub/sub.c)
+target_link_libraries(Sub ${Libzmq})
