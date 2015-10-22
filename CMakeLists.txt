@@ -7,9 +7,13 @@ include_directories("${PROJ_BASE}/include")
 
 
 find_library(Libzmq zmq)
-
-if(Libzmq EQUAL Libzmq-NOTFOUND)
+if(${Libzmq} STREQUAL "Libzmq-NOTFOUND")
   message(FATAL_ERROR "zeromq library not found!")
+endif()
+
+find_library(Libthread pthread)
+if(${Libthread} STREQUAL "Libthread-NOTFOUND")
+  message(FATAL_ERROR "thread library not found!")
 endif()
 
 ##### request reply example
@@ -24,3 +28,15 @@ add_executable(Pub ${PROJ_BASE}/pub-sub/pub.c)
 target_link_libraries(Pub ${Libzmq})
 add_executable(Sub ${PROJ_BASE}/pub-sub/sub.c)
 target_link_libraries(Sub ${Libzmq})
+
+#### dealer rely example
+add_executable(DealerRep ${PROJ_BASE}/dealer-rep/main.c)
+target_link_libraries(DealerRep ${Libzmq} ${Libthread})
+
+#### req router example
+add_executable(ReqRouterReq ${PROJ_BASE}/req-router/send.c)
+target_link_libraries(ReqRouterReq  ${Libzmq})
+
+#add_executable(ReqRouter ${PROJ_BASE}/req-router/router.c)
+#target_link_libraries(ReqRouter  ${Libzmq} ${Libthread})
+
