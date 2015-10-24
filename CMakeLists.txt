@@ -6,6 +6,7 @@ set(PROJ_BASE ${PROJECT_SOURCE_DIR}/src)
 include_directories("${PROJ_BASE}/include")
 
 
+# library
 find_library(Libzmq zmq)
 if(${Libzmq} STREQUAL "Libzmq-NOTFOUND")
   message(FATAL_ERROR "zeromq library not found!")
@@ -37,6 +38,6 @@ target_link_libraries(DealerRep ${Libzmq} ${Libthread})
 add_executable(ReqRouterReq ${PROJ_BASE}/req-router/send.c)
 target_link_libraries(ReqRouterReq  ${Libzmq})
 
-#add_executable(ReqRouter ${PROJ_BASE}/req-router/router.c)
-#target_link_libraries(ReqRouter  ${Libzmq} ${Libthread})
+add_executable(ReqRouter ${PROJ_BASE}/req-router/router.c)
+target_link_libraries(ReqRouter  ${Libzmq} ${Libthread})
 

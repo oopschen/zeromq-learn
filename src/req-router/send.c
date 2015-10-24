@@ -4,10 +4,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 
 int main(int argc, char *argv[])
 {
-    if (1 > argc) {
+    if (2 > argc) {
       printf("input id\n");
       return 1;
     }
@@ -19,23 +20,26 @@ int main(int argc, char *argv[])
 
     char buf[24];
     char * sendPrefix = "hello";
-    int sendBufSize = strlen(sendPrefix) + strlen(argv[0]);
+    int sendBufSize = strlen(sendPrefix) + strlen(argv[1]) + 1;
     char * sendBuf = malloc(sendBufSize);
     assert(NULL != sendBuf);
 
-    int sendBufActualSize = snprintf(sendBuf, sendBufSize, "%s%s", sendPrefix, argv[0]);
+    int sendBufActualSize = snprintf(sendBuf, sendBufSize, "%s%s", sendPrefix, argv[1]);
     assert(0 < sendBufActualSize);
 
     int cnt = 0;
     while (cnt ++ < 10) {
         zmq_send (sock, sendBuf, sendBufActualSize, 0);
-        printf ("send hello\n");
+        sendBuf[sendBufActualSize] = '\0';
+        printf ("send %s\n", sendBuf);
         
         int recvBytes = zmq_recv(sock, buf, sizeof(buf), 0);
         if (0 < recvBytes) {
           buf[recvBytes] = '\0';
           printf("recv word: %s\n", buf);
         }
+
+        sleep(1);
     }
 
     free(sendBuf);

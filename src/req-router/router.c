@@ -11,11 +11,29 @@ int main(void)
   char buf[128];
   int recvBytes = 0;
   while (1) {
-    // recv message 
-    
-    
-    // send it back
+    // recv  id
+    recvBytes = zmq_recv(sock, buf, sizeof(buf), 0);
+    if (0 < recvBytes) {
+      // send it back
+      printf("recv id bytes=%d\n", recvBytes);
 
+      zmq_send(sock, buf, recvBytes, ZMQ_SNDMORE);
+    }
+
+    // delimiter emtpy frame
+    recvBytes = zmq_recv(sock, buf, sizeof(buf), 0);
+    assert(0 == recvBytes);
+
+    recvBytes = zmq_recv(sock, buf, sizeof(buf), 0);
+    // actual message
+    if (0 < recvBytes) {
+      // send it back
+      buf[recvBytes] = '\0';
+      printf("recv msg %s, bytes=%d\n", buf, recvBytes);
+
+      zmq_send(sock, "", 0, ZMQ_SNDMORE);
+      zmq_send(sock, buf, recvBytes, 0);
+    }
   }
 
   zmq_close(sock);
