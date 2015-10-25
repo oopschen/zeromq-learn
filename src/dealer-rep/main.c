@@ -2,25 +2,46 @@
 #include <zmq.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 struct RepContext {
   int id;
   int start_port;
-  void * ctx;
 };
 
 void *reply(void * ctx)
 {
-  void *reply = zmq_socket(ctx, ZMQ_REP);
-  assert(0 == zmq_bind(reply, "tcp://127.0.0.1:5555"));
+  struct RepContext * rctx = (struct RepContext *)ctx;
+  void *zctx = zmq_ctx_new();
+  void *reply = zmq_socket(zctx, ZMQ_REP);
+  char * prefix = "tcp://127.0.0.1:";
+  char * addr = malloc(strlen(prefix) + 10);
+  if (NULL == addr) {
+    return NULL;
+  }
+
+  int addr_size = snprintf(addr, (strlen(prefix) + 10), "%s%d", prefix, rctx->start_port);
+  assert(addr_size > strlen(prefix));
+
+  assert(0 == zmq_bind(reply, addr));
   char buf[32];
   int recvBytes = 0;
 
   recvBytes = zmq_recv(reply, buf, sizeof(buf), 0);
   if (0 < recvBytes) {
     buf[recvBytes] = '\0';
-    printf("[reply] recv %s\n", buf);
+    printf("[recv%d] recv %s\n", rctx->id, buf);
+
+    char * reply_buf = malloc(strlen(buf) + 30);
+    if (NULL != reply_buf) {
+      int rsize = snprintf(reply_buf, strlen(buf) + 30, "%s%d", buf, rctx->id);
+      zmq_send(reply, reply_buf, rsize, 0);
+    }
   }
+
+  zmq_close(reply);
+  zmq_ctx_destroy(zctx);
 
   return NULL;
 }
@@ -28,8 +49,8 @@ void *reply(void * ctx)
 int main(void)
 {
 
-  int threadCnt = 10;
-  int startPort = 10240;
+  int threadCnt = 2;
+  int startPort = 3000;
   struct RepContext * threads = malloc(sizeof(struct RepContext) * threadCnt);
   if (NULL == threads) {
     printf("mom!\n");
@@ -46,24 +67,52 @@ int main(void)
   
   for (int i = 0; i < threadCnt; i++) {
     threads[i].id = i;
-    threads[i].ctx = ctx;
-    threads[i].start_port = startPort;
+    threads[i].start_port = startPort + i;
     
     assert(0 == pthread_create(workers + i, NULL, reply, threads + i));
   }
 
-  // router
-  void *router = zmq_socket(ctx, ZMQ_DEALER);
-  assert(0 == zmq_connect(router, "tcp://127.0.0.1:5555"));
-  zmq_send(router, "", 0, ZMQ_SNDMORE);
-  zmq_send(router, "hello", 5, 0);
+  // sock
+  void *sock = zmq_socket(ctx, ZMQ_DEALER);
+  char * addr_prefix = "tcp://127.0.0.1:";
+  char * addr = malloc(strlen(addr_prefix) + 10);
+  if (NULL == addr) {
+    printf("mom!\n");
+    return 1;
+  }
 
+  // connect to multiple relpy
+  printf("dealer connecting...\n");
+  for (int i = 0; i < threadCnt; ++i) {
+    int addr_s = snprintf(addr, (strlen(addr_prefix) + 10),  "%s%d", addr_prefix, threads[i].start_port);
+    assert(addr_s > strlen(addr_prefix));
+    assert(0 == zmq_connect(sock, addr));
+  }
+  free (addr);
+
+  // send msg
+  printf("dealer sending msg...\n");
+  for (int i = 0; i < threadCnt; ++i) {
+    zmq_send(sock, "", 0, ZMQ_SNDMORE);
+    zmq_send(sock, "hello", 5, 0);
+  }
+    
   char buf[32];
   int recvBytes = 0;
-  recvBytes = zmq_recv(router, buf, sizeof(buf), 0);
-  if (0 < recvBytes) {
-    buf[recvBytes] = '\0';
-    printf("recv %s\n", buf);
+  int recvCnt = 0;
+  printf("dealer receiving msg...\n");
+  while (recvCnt < threadCnt) {
+    recvBytes = zmq_recv(sock, buf, sizeof(buf), 0);
+    if (0 < recvBytes) {
+      buf[recvBytes] = '\0';
+      printf("[dealer] recv %s\n", buf);
+      recvCnt ++;
+    } else {
+      printf("[dealer] recv %d\n", recvBytes);
+    }
   }
+
+  zmq_close(sock);
+  zmq_ctx_destroy(ctx);
   return 0;
 }
