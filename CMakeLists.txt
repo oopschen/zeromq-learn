@@ -3,23 +3,20 @@ project (ZeromqLearning C)
 
 set(PROJ_BASE ${PROJECT_SOURCE_DIR}/src)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-set(CMAKE_C_COMPILER /usr/bin/clang)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c11")
-set(CMAKE_PREFIX_PATH /usr)
 
 include_directories("${PROJ_BASE}/include")
-include_directories("/include")
 
 # modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/mods/")
 
 # library
 ## zero mq
-find_package(ZMQ 4 REQUIRED)
+find_package(ZMQ REQUIRED)
 include_directories(${ZMQ_INCLUDE_DIRS})
 set(EXTRALIBS ${ZMQ_LIBRARIES})
 ## threads
-find_package(Threads 4 REQUIRED)
+find_package(Threads REQUIRED)
 set(EXTRALIBS ${EXTRALIBS} ${CMAKE_THREAD_LIBS_INIT})
 
 ##### request reply example
