@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 
 struct RepContext {
   int id;
@@ -33,6 +34,7 @@ void *reply(void * ctx)
     buf[recvBytes] = '\0';
     printf("[recv%d] recv %s\n", rctx->id, buf);
 
+    sleep(10 - rctx->id);
     char * reply_buf = malloc(strlen(buf) + 30);
     if (NULL != reply_buf) {
       int rsize = snprintf(reply_buf, strlen(buf) + 30, "%s%d", buf, rctx->id);
